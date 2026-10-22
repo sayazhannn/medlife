@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Пульт сообщений</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Пульт: рабочий инструмент. Спокойная нейтральная база, один зелёный акцент WhatsApp, плотный список карточек. */
+:root{
+  --bg:#F4F5F2;--card:#FFFFFF;--fg:#14211B;--muted:#62706A;--line:#DCE1DC;--soft:#EAF0EB;
+  --accent:#14804A;--on-accent:#FFFFFF;--accent-ink:#0E6439;--warn-bg:#FFF4D6;--warn-fg:#6B4E00;--danger:#B3261E;
+  --font:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0F1512;--card:#17201B;--fg:#E6EEE9;--muted:#93A39A;--line:#2A3630;--soft:#1F2B25;
+  --accent:#2FB36B;--on-accent:#06150D;--accent-ink:#5ED394;--warn-bg:#3A2F10;--warn-fg:#F2D27A;--danger:#FF8A80;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1512;--card:#17201B;--fg:#E6EEE9;--muted:#93A39A;--line:#2A3630;--soft:#1F2B25;
+  --accent:#2FB36B;--on-accent:#06150D;--accent-ink:#5ED394;--warn-bg:#3A2F10;--warn-fg:#F2D27A;--danger:#FF8A80;color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 var(--font);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 80px}
+.wrap{max-width:880px;margin:0 auto}
+h1{font-size:26px;line-height:1.15;margin:0 0 4px;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:0 0 18px}
+.notice{background:var(--warn-bg);color:var(--warn-fg);border-radius:12px;padding:12px 14px;font-size:14px;margin-bottom:18px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;min-width:0}
+.stat b{display:block;font-size:24px;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:13px}
+.bar{height:6px;border-radius:99px;background:var(--soft);overflow:hidden;margin-bottom:20px}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .4s}
+.tabs{display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid var(--line)}
+.tabs button{border:0;background:none;color:var(--muted);font:inherit;font-weight:700;padding:10px 14px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.panel[hidden]{display:none}
+label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:5px}
+input,select,textarea{width:100%;font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+textarea{min-height:130px;resize:vertical;line-height:1.5}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+.box{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:16px}
+.box h2{font-size:16px;margin:0 0 4px}
+.hint{color:var(--muted);font-size:13px;margin:4px 0 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{border:1px solid var(--line);background:var(--soft);color:var(--fg);border-radius:99px;padding:4px 10px;font:inherit;font-size:13px;cursor:pointer}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+.toolbar>*{min-width:0}
+.toolbar input{flex:1 1 200px;width:auto}
+.toolbar select{width:auto;flex:0 1 180px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:10px;padding:10px 16px;font:inherit;font-weight:700;cursor:pointer;background:var(--accent);color:var(--on-accent);text-decoration:none;white-space:nowrap}
+.btn[aria-disabled="true"]{opacity:.45;pointer-events:none}
+.btn--ghost{background:transparent;color:var(--fg);border:1px solid var(--line)}
+.btn--small{padding:7px 12px;font-size:13px}
+.row{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.row.is-done{border-color:var(--accent)}
+.row__grid{display:grid;grid-template-columns:1.2fr 1fr 1.2fr;gap:10px}
+@media (max-width:640px){.row__grid{grid-template-columns:1fr}}
+.row__text{margin:12px 0 10px;background:var(--soft);border-radius:10px;padding:10px 12px;font-size:14px;white-space:pre-wrap;word-break:break-word}
+.row__act{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.row__act .grow{flex:1}
+.badge{font-size:12px;font-weight:700;color:var(--accent-ink);background:var(--soft);border-radius:99px;padding:3px 10px}
+.empty{background:var(--card);border:1px dashed var(--line);border-radius:16px;padding:28px 16px;text-align:center;color:var(--muted)}
+.sites{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.site .row__text{margin:0;font-size:13px;max-height:9.5em;overflow:auto}
+.site{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.site small{color:var(--muted);display:block}
+.site b{display:block;overflow-wrap:anywhere}
+.site__act{display:flex;gap:8px;flex-wrap:wrap}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:99px;font-weight:600;font-size:14px;opacity:0;pointer-events:none;transition:.3s}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+[hidden]{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Пульт сообщений</h1>
+  <p class="sub">Готовый текст, ссылка на пример сайта и кнопка, которая открывает WhatsApp с уже вставленным сообщением.</p>
+
+  <div class="notice"><b>Правило пульта:</b> одно сообщение одному человеку, и только тем, кто публично указал номер для связи с клиентами. Отправляете вы сами, нажав «Отправить» в WhatsApp. Массовые рассылки блокируются WhatsApp, а номер можно потерять.</div>
+
+  <div class="stats">
+    <div class="stat"><b id="s-total">0</b><span>получателей</span></div>
+    <div class="stat"><b id="s-open">0</b><span>чатов открыто</span></div>
+    <div class="stat"><b id="s-left">0</b><span>осталось</span></div>
+  </div>
+  <div class="bar" aria-hidden="true"><i id="bar"></i></div>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" data-tab="rec" aria-selected="true">Получатели</button>
+    <button role="tab" data-tab="tpl" aria-selected="false">Текст</button>
+    <button role="tab" data-tab="sites" aria-selected="false">Примеры сайтов</button>
+  </div>
+
+  <section class="panel" data-panel="rec">
+    <details class="box" id="imp">
+      <summary style="cursor:pointer;font-weight:700">Добавить списком</summary>
+      <p class="hint" style="margin-bottom:10px">Одно заведение на строку: название; номер. Вписывайте номера, которые заведение само указало для связи с клиентами.</p>
+      <label for="imp-site">Какой пример показать всем из списка</label>
+      <select id="imp-site"></select>
+      <label for="imp-text" style="margin-top:10px">Список</label>
+      <textarea id="imp-text" placeholder="Кофейня Утро; +7 701 123 45 67&#10;Барбершоп Север; 8 777 000 11 22"></textarea>
+      <div style="margin-top:10px"><button class="btn" id="imp-go" type="button">Добавить из списка</button></div>
+    </details>
+    <div class="toolbar">
+      <input id="q" type="search" placeholder="Поиск по названию или номеру" aria-label="Поиск">
+      <select id="flt" aria-label="Фильтр">
+        <option value="all">Все</option>
+        <option value="new">Не открывали</option>
+        <option value="done">Чат открыт</option>
+      </select>
+      <button class="btn" id="add" type="button">+ Добавить</button>
+    </div>
+    <div id="rows"></div>
+  </section>
+
+  <section class="panel" data-panel="tpl" hidden>
+    <div class="box">
+      <h2>Текст сообщения</h2>
+      <p class="hint">Одинаковый для всех получателей. Метки заменятся сами для каждого.</p>
+      <div style="margin-top:10px">
+        <label for="tpl">Шаблон</label>
+        <textarea id="tpl"></textarea>
+        <div class="chips">
+          <button class="chip" type="button" data-ins="{компания}">{компания}</button>
+          <button class="chip" type="button" data-ins="{ниша}">{ниша}</button>
+          <button class="chip" type="button" data-ins="{ссылка}">{ссылка}</button>
+        </div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn--ghost btn--small" id="tpl-reset" type="button">Вернуть исходный</button>
+      </div>
+    </div>
+    <div class="box">
+      <h2>Как увидит получатель</h2>
+      <div class="row__text" id="tpl-prev" style="margin-bottom:0"></div>
+    </div>
+  </section>
+
+  <section class="panel" data-panel="sites" hidden>
+    <p class="hint" style="margin:0 0 10px">У каждого примера готовый текст. «Отправить в WhatsApp» откроет WhatsApp, и вы сами выберете, кому отправить.</p>
+    <div class="toolbar">
+      <input id="sq" type="search" placeholder="Найти пример: стоматология, кофейня…" aria-label="Поиск примеров">
+    </div>
+    <div class="sites" id="sites"></div>
+  </section>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const SITES = [{"slug": "dental-line", "name": "Дентал Лайн", "niche": "Стоматология"}, {"slug": "shelk-beauty", "name": "Шёлк", "niche": "Салон красоты"}, {"slug": "borodach", "name": "Бородач", "niche": "Барбершоп"}, {"slug": "nail-room", "name": "Nail Room", "niche": "Ногтевая студия"}, {"slug": "vzglyad", "name": "Взгляд", "niche": "Студия бровей и ресниц"}, {"slug": "estet-clinic", "name": "Эстет Клиник", "niche": "Косметология"}, {"slug": "teplo-massage", "name": "Тепло", "niche": "Массажный салон"}, {"slug": "oasis-spa", "name": "Оазис", "niche": "SPA-центр"}, {"slug": "chernila-tattoo", "name": "Чернила", "niche": "Тату-студия"}, {"slug": "medlife", "name": "МедЛайф", "niche": "Медицинский центр"}, {"slug": "zorkiy", "name": "Зоркий", "niche": "Оптика и офтальмология"}, {"slug": "lapa-vet", "name": "Лапа", "niche": "Ветеринарная клиника"}, {"slug": "pushistik", "name": "Пушистик", "niche": "Груминг-салон"}, {"slug": "opora-psy", "name": "Опора", "niche": "Центр психологической помощи"}, {"slug": "govorushka", "name": "Говорушка", "niche": "Логопедический центр"}, {"slug": "atlet-fitness", "name": "Атлет", "niche": "Фитнес-клуб"}, {"slug": "prana-yoga", "name": "Прана", "niche": "Йога-студия"}, {"slug": "ritm-dance", "name": "Ритм", "niche": "Школа танцев"}, {"slug": "ring-boxing", "name": "Ринг", "niche": "Клуб бокса и ММА"}, {"slug": "delfinchik", "name": "Дельфинчик", "niche": "Детская школа плавания"}, {"slug": "lingua-school", "name": "Lingua", "niche": "Языковая школа"}, {"slug": "kodkids", "name": "КодКидс", "niche": "Школа программирования для детей"}, {"slug": "avtostart", "name": "Автостарт", "niche": "Автошкола"}, {"slug": "kamerton", "name": "Камертон", "niche": "Музыкальная школа"}, {"slug": "grant-ent", "name": "Грант", "niche": "Подготовка к ЕНТ"}, {"slug": "barista-coffee", "name": "Бариста", "niche": "Кофейня"}, {"slug": "shanyrak", "name": "Шанырак", "niche": "Ресторан казахской кухни"}, {"slug": "pizza-nonna", "name": "Пицца Нонна", "niche": "Пиццерия"}, {"slug": "sakura-sushi", "name": "Сакура", "niche": "Суши-бар"}, {"slug": "sladkiy-dom", "name": "Сладкий дом", "niche": "Торты на заказ"}, {"slug": "kolos-bakery", "name": "Колос", "niche": "Пекарня"}, {"slug": "dastarkan-catering", "name": "Дастарқан", "niche": "Кейтеринг"}, {"slug": "zelenaya-tarelka", "name": "Зелёная тарелка", "niche": "Доставка здоровой еды"}, {"slug": "motor-service", "name": "Мотор", "niche": "Автосервис"}, {"slug": "blesk-detailing", "name": "Блеск", "niche": "Детейлинг-центр"}, {"slug": "evakuator-24", "name": "Эвакуатор 24", "niche": "Эвакуатор и техпомощь"}, {"slug": "chisto-cleaning", "name": "Чисто", "niche": "Клининговая компания"}, {"slug": "himchistka-lux", "name": "Химчистка Люкс", "niche": "Химчистка и прачечная"}, {"slug": "remstroy", "name": "Ремстрой", "niche": "Ремонт квартир"}, {"slug": "prostranstvo", "name": "Пространство", "niche": "Студия дизайна интерьера"}, {"slug": "dub-mebel", "name": "Дуб", "niche": "Мебель на заказ"}, {"slug": "ifix", "name": "iFix", "niche": "Ремонт телефонов и ноутбуков"}, {"slug": "master-na-chas", "name": "Мастер на час", "niche": "Бытовые услуги"}, {"slug": "pravo-lawyer", "name": "Право", "niche": "Юридическая компания"}, {"slug": "balans-buh", "name": "Баланс", "niche": "Бухгалтерские услуги"}, {"slug": "kadr-photo", "name": "Кадр", "niche": "Фотостудия"}, {"slug": "toi-toi", "name": "Той-Той", "niche": "Организация праздников"}, {"slug": "flora-flowers", "name": "Флора", "niche": "Цветы с доставкой"}, {"slug": "joldas-tour", "name": "Жолдас Тур", "niche": "Туристическое агентство"}, {"slug": "igolka-atelier", "name": "Иголка", "niche": "Ателье"}];
+const BASE = (slug) => 'https://' + slug + '-saya-krutaya.vercel.app';
+const DEFAULT_TPL = 'Здравствуйте! Я делаю сайты для бизнеса в Астане. Собрала пример сайта для категории «{ниша}»: {ссылка}\n\nНа сайте есть цены, отзывы и запись через WhatsApp. Если понравится, сделаю такой же для {компания} с вашими ценами, фото и контактами.\n\nМожно прислать варианты оформления?';
+const KEY = 'pult-v1';
+const $ = (id) => document.getElementById(id);
+
+let state = { tpl: DEFAULT_TPL, rows: [], flt: 'all', q: '' };
+try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && Array.isArray(s.rows)) state = { ...state, ...s, flt: 'all', q: '' }; } catch (e) {}
+if (!state.rows.length) state.rows = [{ id: Date.now(), company: 'Кофейня «Пример»', phone: '', slug: 'barista-coffee', ts: 0 }];
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify({ tpl: state.tpl, rows: state.rows })); } catch (e) {} };
+
+const siteBy = (slug) => SITES.find((s) => s.slug === slug) || SITES[0];
+const phoneNorm = (v) => { let d = String(v || '').replace(/\D/g, ''); if (d.length === 11 && d[0] === '8') d = '7' + d.slice(1); if (d.length === 10) d = '7' + d; return d; };
+const phoneOk = (v) => /^7\d{10}$/.test(phoneNorm(v));
+const textFor = (r) => {
+  const site = siteBy(r.slug);
+  return state.tpl.split('{компания}').join(r.company || 'вашей компании')
+    .split('{ниша}').join(site.niche.toLowerCase())
+    .split('{ссылка}').join(BASE(site.slug));
+};
+const waLink = (r) => 'https://wa.me/' + phoneNorm(r.phone) + '?text=' + encodeURIComponent(textFor(r));
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const when = (ts) => { const d = new Date(ts); const p = (n) => String(n).padStart(2, '0'); return p(d.getDate()) + '.' + p(d.getMonth() + 1) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()); };
+let toastT; const toast = (m) => { const t = $('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 1800); };
+
+const copy = async (text) => {
+  try { await navigator.clipboard.writeText(text); toast('Скопировано'); }
+  catch (e) { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); toast('Скопировано'); } catch (_) { toast('Выделите и скопируйте вручную'); } ta.remove(); }
+};
+
+function stats() {
+  const total = state.rows.length, open = state.rows.filter((r) => r.ts).length;
+  $('s-total').textContent = total; $('s-open').textContent = open; $('s-left').textContent = total - open;
+  $('bar').style.width = total ? Math.round(open / total * 100) + '%' : '0';
+}
+
+function rowHTML(r) {
+  const opts = SITES.map((s) => `<option value="${s.slug}"${s.slug === r.slug ? ' selected' : ''}>${esc(s.niche)}</option>`).join('');
+  const ok = phoneOk(r.phone);
+  return `<article class="row${r.ts ? ' is-done' : ''}" data-id="${r.id}">
+    <div class="row__grid">
+      <div><label for="c${r.id}">Компания</label><input id="c${r.id}" data-f="company" value="${esc(r.company)}" placeholder="Название заведения"></div>
+      <div><label for="p${r.id}">Телефон WhatsApp</label><input id="p${r.id}" data-f="phone" inputmode="tel" value="${esc(r.phone)}" placeholder="+7 7__ ___ __ __"></div>
+      <div><label for="n${r.id}">Какой пример показать</label><select id="n${r.id}" data-f="slug">${opts}</select></div>
+    </div>
+    <div class="row__text" data-role="text">${esc(textFor(r))}</div>
+    <div class="row__act">
+      <a class="btn" data-role="wa" target="_blank" rel="noopener" href="${ok ? esc(waLink(r)) : '#'}" aria-disabled="${ok ? 'false' : 'true'}">Открыть WhatsApp</a>
+      <button class="btn btn--ghost btn--small" data-act="copy" type="button">Копировать текст</button>
+      <a class="btn btn--ghost btn--small" data-role="site" target="_blank" rel="noopener" href="${BASE(r.slug)}">Пример сайта</a>
+      <span class="grow"></span>
+      <span class="badge" data-role="badge"${r.ts ? '' : ' hidden'}>${r.ts ? 'Чат открыт ' + when(r.ts) : ''}</span>
+      <button class="btn btn--ghost btn--small" data-act="reset" type="button"${r.ts ? '' : ' hidden'}>Сбросить</button>
+      <button class="btn btn--ghost btn--small" data-act="del" type="button" style="color:var(--danger)">Удалить</button>
+    </div>
+    ${ok ? '' : '<p class="hint">Введите номер, и кнопка WhatsApp станет активной.</p>'}
+  </article>`;
+}
+
+function renderRows() {
+  const q = state.q.trim().toLowerCase();
+  const list = state.rows.filter((r) =>
+    (state.flt === 'all' || (state.flt === 'done') === !!r.ts) &&
+    (!q || r.company.toLowerCase().includes(q) || phoneNorm(r.phone).includes(q.replace(/\D/g, '') || '§')));
+  $('rows').innerHTML = list.length ? list.map(rowHTML).join('') : '<div class="empty">Здесь пока никого нет. Нажмите «+ Добавить» и впишите название и номер заведения.</div>';
+  stats();
+}
+
+function updateRow(el, r) {
+  const ok = phoneOk(r.phone), a = el.querySelector('[data-role="wa"]');
+  el.querySelector('[data-role="text"]').textContent = textFor(r);
+  a.href = ok ? waLink(r) : '#'; a.setAttribute('aria-disabled', ok ? 'false' : 'true');
+  el.querySelector('[data-role="site"]').href = BASE(r.slug);
+}
+
+$('rows').addEventListener('input', (e) => {
+  const el = e.target.closest('.row'); if (!el || !e.target.dataset.f) return;
+  const r = state.rows.find((x) => x.id == el.dataset.id); r[e.target.dataset.f] = e.target.value; save(); updateRow(el, r);
+});
+$('rows').addEventListener('change', (e) => {
+  const el = e.target.closest('.row'); if (!el) return;
+  if (e.target.dataset.f === 'phone') renderRows();
+});
+$('rows').addEventListener('click', (e) => {
+  const el = e.target.closest('.row'); if (!el) return;
+  const r = state.rows.find((x) => x.id == el.dataset.id);
+  const wa = e.target.closest('[data-role="wa"]');
+  if (wa) { if (!phoneOk(r.phone)) { e.preventDefault(); toast('Сначала введите номер'); return; } r.ts = Date.now(); save(); setTimeout(renderRows, 50); return; }
+  const act = e.target.closest('[data-act]'); if (!act) return;
+  if (act.dataset.act === 'copy') copy(textFor(r));
+  if (act.dataset.act === 'reset') { r.ts = 0; save(); renderRows(); }
+  if (act.dataset.act === 'del') { state.rows = state.rows.filter((x) => x !== r); save(); renderRows(); toast('Удалено'); }
+});
+$('add').addEventListener('click', () => { state.rows.unshift({ id: Date.now(), company: '', phone: '', slug: SITES[0].slug, ts: 0 }); state.flt = 'all'; state.q = ''; $('flt').value = 'all'; $('q').value = ''; save(); renderRows(); const i = $('rows').querySelector('input'); if (i) i.focus(); });
+$('q').addEventListener('input', (e) => { state.q = e.target.value; renderRows(); });
+$('flt').addEventListener('change', (e) => { state.flt = e.target.value; renderRows(); });
+
+// импорт списком
+$('imp-site').innerHTML = SITES.map((x) => `<option value="${x.slug}">${esc(x.niche)}</option>`).join('');
+$('imp-go').addEventListener('click', () => {
+  const have = new Set(state.rows.map((r) => phoneNorm(r.phone)).filter(Boolean));
+  let added = 0, skipped = 0;
+  $('imp-text').value.split(/\n+/).forEach((line, i) => {
+    line = line.trim(); if (!line) return;
+    const m = line.match(/(\+?\d[\d\s\-()]{8,}\d)/);
+    const phone = m ? m[1].trim() : '';
+    const company = line.replace(phone, '').replace(/[;,|\t]+/g, ' ').replace(/\s+-\s*$/, '').trim();
+    const n = phoneNorm(phone);
+    if (!company || !phoneOk(phone) || have.has(n)) { skipped++; return; }
+    have.add(n);
+    state.rows.unshift({ id: Date.now() + i, company, phone, slug: $('imp-site').value, ts: 0 }); added++;
+  });
+  save(); state.flt = 'all'; state.q = ''; $('flt').value = 'all'; $('q').value = ''; renderRows();
+  if (added) $('imp-text').value = '';
+  toast('Добавлено: ' + added + (skipped ? ', пропущено: ' + skipped : ''));
+});
+
+// шаблон
+const prev = () => {
+  const demo = { company: 'Кофейня «Пример»', slug: 'barista-coffee' };
+  $('tpl-prev').textContent = textFor(demo);
+};
+$('tpl').value = state.tpl; prev();
+$('tpl').addEventListener('input', (e) => { state.tpl = e.target.value; save(); prev(); renderRows(); renderSites(); });
+$('tpl-reset').addEventListener('click', () => { state.tpl = DEFAULT_TPL; $('tpl').value = DEFAULT_TPL; save(); prev(); renderRows(); renderSites(); toast('Текст возвращён'); });
+document.querySelectorAll('[data-ins]').forEach((b) => b.addEventListener('click', () => {
+  const t = $('tpl'), s = t.selectionStart, e = t.selectionEnd;
+  t.value = t.value.slice(0, s) + b.dataset.ins + t.value.slice(e); t.focus(); t.selectionStart = t.selectionEnd = s + b.dataset.ins.length;
+  state.tpl = t.value; save(); prev(); renderRows(); renderSites();
+}));
+
+// примеры сайтов
+const siteText = (s) => textFor({ company: '', slug: s.slug });
+const shareLink = (s) => 'https://wa.me/?text=' + encodeURIComponent(siteText(s));
+function renderSites() {
+  const q = $('sq').value.trim().toLowerCase();
+  $('sites').innerHTML = SITES.filter((s) => !q || (s.niche + ' ' + s.name).toLowerCase().includes(q)).map((s) =>
+    `<div class="site"><div><small>${esc(s.niche)}</small><b>${esc(s.name)}</b></div>
+      <div class="row__text">${esc(siteText(s))}</div>
+      <div class="site__act"><a class="btn btn--small" target="_blank" rel="noopener" href="${shareLink(s)}">Отправить в WhatsApp</a>
+      <button class="btn btn--ghost btn--small" type="button" data-copytext="${s.slug}">Копировать текст</button>
+      <a class="btn btn--ghost btn--small" target="_blank" rel="noopener" href="${BASE(s.slug)}">Открыть сайт</a></div></div>`).join('') || '<div class="empty">Ничего не найдено.</div>';
+}
+$('sq').addEventListener('input', renderSites);
+$('sites').addEventListener('click', (e) => { const b = e.target.closest('[data-copytext]'); if (b) copy(siteText(siteBy(b.dataset.copytext))); });
+
+// вкладки
+document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => {
+  document.querySelectorAll('.tabs button').forEach((x) => x.setAttribute('aria-selected', x === b));
+  document.querySelectorAll('.panel').forEach((p) => { p.hidden = p.dataset.panel !== b.dataset.tab; });
+}));
+
+renderRows(); renderSites();
+</script>
+</body>
+</html>
